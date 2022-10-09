@@ -29,7 +29,7 @@ export const pkgs = isMicrosoftInternal ? [
     { id: "BuildXL.Tracing.AriaTenantToken", version: "1.0.0" },
 
     // Windows Sdk so microsoft dev's don't have to install it.
-    { id: "WindowsSdk.Corext", version: "10.0.16299.1", alias: "Windows.Sdk", osSkip: [ "macOS", "unix" ] },
+    { id: "WindowsSdk.Corext", version: "10.0.19041.1", alias: "Windows.Sdk", osSkip: [ "macOS", "unix" ] },
 
     // Artifact packages and dependencies
     { id: "Microsoft.VisualStudio.Services.ArtifactServices.Shared", version: artifactNugetVersion, dependentPackageIdsToSkip: ["*"], dependentPackageIdsToIgnore: ["BuildXL.Cache.Hashing", "Microsoft.Azure.Cosmos.Table", "Microsoft.Azure.Storage.Blob", "BuildXL.Utilities", "DotNetFxRefAssemblies.Corext", "Mono.Unix" ] },

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using BuildXL.Engine;
 using BuildXL.Pips;
 using BuildXL.Pips.DirectedGraph;
@@ -26,10 +27,13 @@ namespace BuildXL.Execution.Analyzer
         private const string OptOutFile = "outputFile";
         private const string OptOutFileShort = "o";
 
+        private const string OptExcludePips = "excludePips";
+
         public Analyzer InitializeDependencyAnalyzer()
         {
             string outputFile = null;
             bool includeDirectories = false;
+            string excludePips = null;
             var pathMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var opt in AnalyzerOptions)
@@ -55,6 +59,10 @@ namespace BuildXL.Execution.Analyzer
                 {
                     includeDirectories = true;
                 }
+                else if (opt.Name.Equals(OptExcludePips, StringComparision.OrdinalIgnoreCase))
+                {
+                    excludePips = opt.Value;
+                }
                 else
                 {
                     throw Error("Unknown option for DependencyAnalyzer analysis: {0}", opt.Name);
@@ -66,7 +74,7 @@ namespace BuildXL.Execution.Analyzer
                 throw Error("Missing required argument 'outputFile'");
             }
 
-            return new DependencyAnalyzer(GetAnalysisInput(), includeDirectories, outputFile, pathMappings);
+            return new DependencyAnalyzer(GetAnalysisInput(), includeDirectories, outputFile, pathMappings, excludePips);
         }
 
         private static void WriteDependencyAnalyzerHelp(HelpWriter writer)
@@ -202,6 +210,7 @@ namespace BuildXL.Execution.Analyzer
 
     internal class DependencyAnalyzer : Analyzer
     {
+
         private const uint OutputGraphVersion = 1;
 
         // The inputs which control the analyzer
@@ -217,8 +226,15 @@ namespace BuildXL.Execution.Analyzer
         private readonly List<DependencyAnalyzerPip> m_allPips = new List<DependencyAnalyzerPip>();
         private readonly ConcurrentBigMap<DirectoryArtifact, IReadOnlyList<FileArtifact>> m_directoryContents = new ConcurrentBigMap<DirectoryArtifact, IReadOnlyList<FileArtifact>>();
 
-        public DependencyAnalyzer(AnalysisInput input, bool includeDirs, string outputFilePath, Dictionary<string, string> pathMappings) : base(input)
+        private Regex? m_excludePipFilter = null; 
+
+        public DependencyAnalyzer(AnalysisInput input, bool includeDirs, string outputFilePath, Dictionary<string, string> pathMappings, string excludePips) : base(input)
         {
+            if (!string.IsNullOrEmpty(excludePips))
+            {
+                m_excludePipFilter = new Regex(excludePips);
+            }
+
             m_outputFilePath = outputFilePath;
             m_pathMappings = pathMappings;
             m_includeDirs = includeDirs;
@@ -397,6 +413,11 @@ namespace BuildXL.Execution.Analyzer
                     OutputDirs = outputDirs,
                     DownstreamPips = downstreamPips,
                 };
+
+                if (m_excludePipFilter?.Match(dependencyAnalyzerPip.Description))
+                {
+                    continue;
+                }
 
                 m_allPips.Add(dependencyAnalyzerPip);
             }

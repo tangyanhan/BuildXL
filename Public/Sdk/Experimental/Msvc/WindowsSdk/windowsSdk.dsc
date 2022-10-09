@@ -6,7 +6,7 @@ import * as Managed from "Sdk.Managed";
 
 export declare const qualifier: { platform: "x86" | "x64"};
 
-const version = "10.0.16299.0";
+const version = "10.0.19041.0";
 
 const isWin = Context.getCurrentHost().os === "win";
 const sdk = isWin ? getHeadersAndLibs() : undefined;
